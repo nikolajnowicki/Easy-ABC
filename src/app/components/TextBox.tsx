@@ -2,10 +2,8 @@
 
 import React, { useState } from "react";
 import axios from "axios";
-import { useTranslation } from "react-i18next";
 
 export const TextBox = () => {
-  const { t } = useTranslation();
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [inputText, setInputText] = useState("");
 
