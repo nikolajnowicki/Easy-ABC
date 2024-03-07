@@ -8,7 +8,9 @@
 
 @font-face {
   font-family: 'Agent-Red';
-  src:  url('/fonts/Agent-Red.regular.ttf') format('truetype'); 
+  src: url('/fonts/Agent-Red.woff2') format('woff2'),
+       url('/fonts/Agent-Red.woff') format('woff');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
