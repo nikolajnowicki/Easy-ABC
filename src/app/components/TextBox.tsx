@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 export const TextBox = () => {
+  const { t } = useTranslation();
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [inputText, setInputText] = useState("");
 
@@ -203,7 +205,7 @@ export const TextBox = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement("a");
       a.href = url;
-      a.download = "example.pdf";
+      a.download = "worksheet.pdf";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -215,10 +217,24 @@ export const TextBox = () => {
   };
 
   return (
-    <div>
-      <input type="text" value={inputText} onChange={handleInputChange} />{" "}
-      <button onClick={generatePDF}>Generate PDF</button>
-      {pdfGenerated && <p>PDF generated successfully!</p>}
+    <div className="flex flex-col items-center justify-center py-8">
+      <p className="pb-4 font-semibold px-4 text-sm md:text-lg">
+        Type what you want and generate a worksheet PDF
+      </p>
+      <input
+        type="text"
+        placeholder="Text / Letter"
+        value={inputText}
+        onChange={handleInputChange}
+        className="outline-none border-2 border-gray-400 rounded-lg px-4 py-2 text-left "
+      />{" "}
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mt-4 rounded "
+        onClick={generatePDF}
+      >
+        Create
+      </button>
+      {pdfGenerated && <p className="mt-6">PDF generated successfully!</p>}
     </div>
   );
 };

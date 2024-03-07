@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { TextBox } from "./components/TextBox";
 import { Header } from "./components/Header";
 
