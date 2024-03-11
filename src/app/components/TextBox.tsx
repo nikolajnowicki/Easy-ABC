@@ -1,238 +1,217 @@
 "use client";
-
 import React, { useState } from "react";
-import axios from "axios";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  PDFDownloadLink,
+  Font,
+} from "@react-pdf/renderer";
 
-export const TextBox = () => {
-  const [pdfGenerated, setPdfGenerated] = useState(false);
+Font.register({
+  family: "Raleway Dots",
+  src: "/fonts/RalewayDots-Regular.ttf",
+});
+
+// Styles
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "column",
+    backgroundColor: "#f3f4f6",
+    padding: 20,
+    width: "100%",
+    orientation: "portrait",
+  },
+  section: {
+    flexGrow: 1,
+    margin: 10,
+    padding: 10,
+  },
+  textLine: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  text: {
+    fontFamily: "Raleway Dots",
+    fontSize: 18,
+  },
+  line: {
+    flexDirection: "row",
+  },
+});
+
+interface CustomLineProps {
+  children: React.ReactNode;
+}
+
+const CustomLine: React.FC<CustomLineProps> = ({ children }) => {
+  const hardcodedLine =
+    "--------------------------------------------------------------------";
+
+  return (
+    <View style={styles.textLine}>
+      <Text style={styles.text}>{children}</Text>
+      <Text style={[styles.text, { marginTop: -13 }]}>{hardcodedLine}</Text>
+    </View>
+  );
+};
+
+interface MyDocumentProps {
+  inputText: string;
+}
+
+const characterWidthEstimate: Record<string, number> = {
+  narrow: 0.5,
+  regular: 1,
+  wide: 1.5,
+};
+
+const characterClassification: Record<string, string> = {
+  å: "wide",
+  ä: "medium",
+  ö: "wide",
+  Å: "wide",
+  Ä: "medium",
+  Ö: "wide",
+  a: "narrow",
+  b: "narrow",
+  c: "narrow",
+  d: "narrow",
+  e: "narrow",
+  f: "narrow",
+  g: "narrow",
+  h: "narrow",
+  i: "narrow",
+  j: "narrow",
+  k: "narrow",
+  l: "narrow",
+  m: "wide",
+  n: "narrow",
+  o: "narrow",
+  p: "narrow",
+  q: "narrow",
+  r: "narrow",
+  s: "narrow",
+  t: "narrow",
+  u: "narrow",
+  v: "narrow",
+  w: "wide",
+  x: "narrow",
+  y: "narrow",
+  z: "narrow",
+  A: "wide",
+  B: "wide",
+  C: "wide",
+  D: "wide",
+  E: "wide",
+  F: "wide",
+  G: "wide",
+  H: "wide",
+  I: "narrow",
+  J: "narrow",
+  K: "wide",
+  L: "narrow",
+  M: "wide",
+  N: "wide",
+  O: "wide",
+  P: "wide",
+  Q: "wide",
+  R: "wide",
+  S: "wide",
+  T: "wide",
+  U: "wide",
+  V: "wide",
+  W: "wide",
+  X: "wide",
+  Y: "wide",
+  Z: "wide",
+};
+
+const getCharacterFactor = (char: string): number => {
+  return characterWidthEstimate[characterClassification[char] || "regular"];
+};
+
+const calculateTextWidth = (text: string, fontSize: number): number => {
+  return text.split("").reduce((total, char) => {
+    return total + getCharacterFactor(char) * fontSize;
+  }, 0);
+};
+
+const dynamicFontSizeMultiplier = (text: string): number => {
+  if (text.length <= 2) {
+    return 0.3;
+  } else {
+    return 0.5;
+  }
+};
+
+const repeatTextOneLine = (
+  text: string,
+  pageWidth: number,
+  fontSize: number,
+  safeWidthPercentage = 0.9
+): string => {
+  const multiplier = dynamicFontSizeMultiplier(text);
+  const textWidth = calculateTextWidth(text, fontSize * multiplier);
+  const safeWidth = pageWidth * safeWidthPercentage - fontSize;
+  let repeatedText = text;
+  let currentWidth = textWidth;
+
+  while (currentWidth + textWidth + fontSize <= safeWidth) {
+    repeatedText += " " + text;
+    currentWidth += textWidth + fontSize;
+  }
+
+  return repeatedText.trim();
+};
+
+const MyDocument: React.FC<MyDocumentProps> = ({ inputText }) => {
+  const pageWidth = 595.28;
+  const fontSize = 18;
+  const repeatedText = repeatTextOneLine(inputText, pageWidth, fontSize);
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.section}>
+          <CustomLine>
+            <Text style={styles.text}>{repeatedText}</Text>
+          </CustomLine>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const TextBox: React.FC = () => {
   const [inputText, setInputText] = useState("");
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(event.target.value);
   };
 
-  const containerWidth = 600;
-  const fontSize = 28;
-  const fontFamily = "Raleway Dots";
-
-  const generateRepeatedText = (
-    text: string,
-    containerWidth: number,
-    fontSize: number,
-    fontFamily: string
-  ): string => {
-    const font = `${fontSize}px '${fontFamily}'`;
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Could not get canvas context");
-    }
-
-    context.font = font;
-
-    let widthPercentage = 0.8;
-    if (text.length === 1) {
-      widthPercentage = 1;
-    } else if (text.length === 2) {
-      widthPercentage = 0.95;
-    }
-
-    let repeatedText = "";
-    const maxWidth = containerWidth * widthPercentage;
-
-    while (true) {
-      const newText =
-        repeatedText + (repeatedText.length > 0 ? " " : "") + text;
-      const newTextWidth = context.measureText(newText).width;
-      if (newTextWidth > maxWidth) {
-        break;
-      }
-      repeatedText = newText;
-    }
-
-    const words = repeatedText.trim().split(" ");
-    while (
-      context.measureText(repeatedText).width > maxWidth &&
-      words.length > 1
-    ) {
-      words.pop();
-      repeatedText = words.join(" ");
-    }
-
-    return repeatedText;
-  };
-
-  const generatePDF = async () => {
-    try {
-      await document.fonts.load(`${fontSize}px '${fontFamily}'`);
-
-      const repeatedText = generateRepeatedText(
-        inputText,
-        containerWidth,
-        fontSize,
-        fontFamily
-      );
-
-      const htmlContent = `
-    <html>
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Raleway+Dots&display=swap" rel="stylesheet">
-        <style>
-          body {
-            font-family: '${fontFamily}', sans-serif;
-            background-color: #f3f4f6;
-            padding: 20px; 
-            margin: 0; 
-          }
-          .container {
-            height: 95%;
-            margin: 0 auto;
-            padding: 15px; 
-            border: 6px solid #333;
-          }
-          .box {
-            width: 100%;
-            padding-bottom: 20px; 
-          }
-          .box-1 {
-            width: 100%;
-            padding-bottom: 20px; 
-            padding-top: 40px;
-          }
-          h1 {
-            color: #333;
-            font-size: 32px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px; 
-            padding-bottom: 10px;
-          }
-          p {
-            position: relative;
-            color: #666;
-            font-size: ${fontSize}px;
-            line-height: 1.2; 
-            text-align: start;
-            padding-top: 0px; 
-            margin: 0; 
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            letter-spacing: 0.1em;
-          }
-          .under-line {
-            position: relative;
-            bottom: 18px
-          
-            
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>${inputText}</h1>
-          <div class="box-1">
-            <p class="first-text">${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box ">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-          <div class="box">
-            <p>${repeatedText}</p>
-            <div class="under-line">--------------------------------------------------------------------------------------------------------</div>
-          </div>
-
-        </div>
-      </body>
-    </html>`;
-
-      const response = await axios.post(
-        "/api/generate-pdf",
-        { htmlContent },
-        { responseType: "blob" }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "worksheet.pdf";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-
-      setPdfGenerated(true);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      <p className="pb-4 font-semibold px-4 text-sm md:text-lg">
-        Type what you want and generate a worksheet PDF
-      </p>
       <input
         type="text"
-        placeholder="Text / Letter"
         value={inputText}
         onChange={handleInputChange}
-        className="outline-none border-2 border-gray-400 rounded-lg px-4 py-2 text-left "
-      />{" "}
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mt-4 rounded "
-        onClick={generatePDF}
-      >
-        Create
-      </button>
-      {pdfGenerated && <p className="mt-6">PDF generated successfully!</p>}
+        className="input-style"
+        placeholder="Enter text here"
+      />
+      {inputText && (
+        <PDFDownloadLink
+          document={<MyDocument inputText={inputText} />}
+          fileName="worksheet.pdf"
+          style={{ textDecoration: "none", marginTop: "10px" }}
+        >
+          {({ blob, url, loading, error }) =>
+            loading ? "Preparing document..." : "Download PDF"
+          }
+        </PDFDownloadLink>
+      )}
     </div>
   );
 };
