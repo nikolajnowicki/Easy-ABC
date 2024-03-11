@@ -1,12 +1,12 @@
 "use client";
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Document,
   Page,
   Text,
   View,
   StyleSheet,
-  PDFDownloadLink,
   Font,
 } from "@react-pdf/renderer";
 
@@ -15,7 +15,11 @@ Font.register({
   src: "/fonts/RalewayDots-Regular.ttf",
 });
 
-// Styles
+const PDFDownloadLink = dynamic(
+  () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
+  { ssr: false }
+);
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -23,6 +27,18 @@ const styles = StyleSheet.create({
     padding: 20,
     width: "100%",
     orientation: "portrait",
+  },
+  header: {
+    fontSize: 24,
+    textAlign: "center",
+    marginBottom: 40,
+  },
+  borderedSection: {
+    flexGrow: 1,
+    margin: 10,
+    borderWidth: 5,
+    borderColor: "#000",
+    padding: 10,
   },
   section: {
     flexGrow: 1,
@@ -48,7 +64,7 @@ interface CustomLineProps {
 
 const CustomLine: React.FC<CustomLineProps> = ({ children }) => {
   const hardcodedLine =
-    "--------------------------------------------------------------------";
+    "-----------------------------------------------------------------";
 
   return (
     <View style={styles.textLine}>
@@ -168,14 +184,15 @@ const repeatTextOneLine = (
 };
 
 const MyDocument: React.FC<MyDocumentProps> = ({ inputText }) => {
-  const pageWidth = 595.28;
+  const pageWidth = 595.28 - 40;
   const fontSize = 18;
   const repeatedText = repeatTextOneLine(inputText, pageWidth, fontSize);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.section}>
+        <View style={styles.borderedSection}>
+          <Text style={styles.header}>{inputText}</Text>
           <CustomLine>
             <Text style={styles.text}>{repeatedText}</Text>
           </CustomLine>
@@ -187,31 +204,63 @@ const MyDocument: React.FC<MyDocumentProps> = ({ inputText }) => {
 
 export const TextBox: React.FC = () => {
   const [inputText, setInputText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(event.target.value);
   };
 
+  const handleDownload = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setInputText("");
+    }, 500);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      <input
-        type="text"
-        value={inputText}
-        onChange={handleInputChange}
-        className="input-style"
-        placeholder="Enter text here"
-      />
-      {inputText && (
+      <div style={{ position: "relative" }}>
+        <input
+          type="text"
+          value={inputText}
+          onChange={handleInputChange}
+          className="input-style"
+          placeholder="Enter text here"
+          style={{
+            backgroundColor: "#f3f4f6",
+            padding: "8px",
+            borderRadius: "4px",
+            textAlign: inputText ? "left" : "center",
+          }}
+        />
+        {!inputText && (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: 0,
+              transform: "translateY(-50%)",
+              width: "100%",
+              color: "#adb5bd",
+              pointerEvents: "none",
+              textAlign: "center",
+            }}
+          >
+            Enter text here
+          </div>
+        )}
+      </div>
+      <div style={{ marginTop: "10px" }}>
         <PDFDownloadLink
           document={<MyDocument inputText={inputText} />}
           fileName="worksheet.pdf"
-          style={{ textDecoration: "none", marginTop: "10px" }}
+          style={{ textDecoration: "none" }}
+          onClick={handleDownload}
         >
-          {({ blob, url, loading, error }) =>
-            loading ? "Preparing document..." : "Download PDF"
-          }
+          {loading ? "Preparing document..." : "Download PDF"}
         </PDFDownloadLink>
-      )}
+      </div>
     </div>
   );
 };
