@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+
 import dynamic from "next/dynamic";
 import {
   Document,
@@ -79,9 +80,9 @@ interface MyDocumentProps {
 }
 
 const characterWidthEstimate: Record<string, number> = {
-  narrow: 0.5,
-  regular: 1,
-  wide: 1.5,
+  narrow: 0.95,
+  regular: 0.97,
+  wide: 1,
 };
 
 const characterClassification: Record<string, string> = {
@@ -97,7 +98,7 @@ const characterClassification: Record<string, string> = {
   d: "narrow",
   e: "narrow",
   f: "narrow",
-  g: "narrow",
+  g: "regular",
   h: "narrow",
   i: "narrow",
   j: "narrow",
