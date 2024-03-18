@@ -9,5 +9,5 @@ You can enter any letters or words you want in the input field and get a downloa
 The app is built with
 
 - nextJS 14
-- Tailwind Css
+- Tailwind CSS
 - react-pdf
