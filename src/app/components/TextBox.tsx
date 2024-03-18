@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: "Raleway Dots",
-    fontSize: 18,
+    fontSize: 24,
   },
   line: {
     flexDirection: "row",
@@ -64,13 +64,12 @@ interface CustomLineProps {
 }
 
 const CustomLine: React.FC<CustomLineProps> = ({ children }) => {
-  const hardcodedLine =
-    "-----------------------------------------------------------------";
+  const hardcodedLine = "--------------------------------------------------";
 
   return (
-    <View style={styles.textLine}>
+    <View style={[styles.textLine, { marginTop: 30 }]}>
       <Text style={styles.text}>{children}</Text>
-      <Text style={[styles.text, { marginTop: -13 }]}>{hardcodedLine}</Text>
+      <Text style={[styles.text, { marginTop: -17 }]}>{hardcodedLine}</Text>
     </View>
   );
 };
@@ -176,10 +175,12 @@ const repeatTextOneLine = (
   let repeatedText = text;
   let currentWidth = textWidth;
 
-  while (currentWidth + textWidth + fontSize <= safeWidth) {
+  while (currentWidth + textWidth <= safeWidth) {
     repeatedText += " " + text;
     currentWidth += textWidth + fontSize;
   }
+
+  repeatedText = repeatedText.slice(0, -text.length);
 
   return repeatedText.trim();
 };
@@ -187,16 +188,21 @@ const repeatTextOneLine = (
 const MyDocument: React.FC<MyDocumentProps> = ({ inputText }) => {
   const pageWidth = 595.28 - 40;
   const fontSize = 18;
+  const numLines = 10;
   const repeatedText = repeatTextOneLine(inputText, pageWidth, fontSize);
+
+  const lines = Array.from({ length: numLines }, (_, index) => (
+    <CustomLine key={index}>
+      <Text style={styles.text}>{repeatedText}</Text>
+    </CustomLine>
+  ));
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.borderedSection}>
           <Text style={styles.header}>{inputText}</Text>
-          <CustomLine>
-            <Text style={styles.text}>{repeatedText}</Text>
-          </CustomLine>
+          {lines}
         </View>
       </Page>
     </Document>
@@ -216,12 +222,12 @@ export const TextBox: React.FC = () => {
     setTimeout(() => {
       setLoading(false);
       setInputText("");
-    }, 500);
+    }, 800);
   };
 
   return (
     <div className="flex flex-col items-center justify-center py-8">
-      <div style={{ position: "relative" }}>
+      <div className="relative">
         <input
           type="text"
           value={inputText}
@@ -231,8 +237,9 @@ export const TextBox: React.FC = () => {
           style={{
             backgroundColor: "#f3f4f6",
             padding: "8px",
+            margin: "8px",
             borderRadius: "4px",
-            textAlign: inputText ? "left" : "center",
+            textAlign: inputText ? "center" : "center",
           }}
         />
         {!inputText && (
@@ -256,7 +263,24 @@ export const TextBox: React.FC = () => {
         <PDFDownloadLink
           document={<MyDocument inputText={inputText} />}
           fileName="worksheet.pdf"
-          style={{ textDecoration: "none" }}
+          style={{
+            textDecoration: "none",
+            padding: "8px 20px",
+            fontSize: "14px",
+            fontWeight: "500",
+            backgroundColor: "#2095E3",
+            color: "#ffffff",
+            border: "1px solid #4b5563",
+            borderRadius: "4px",
+            cursor: "pointer",
+            display: "inline-block",
+            textAlign: "left",
+            lineHeight: "normal",
+            whiteSpace: "nowrap",
+            verticalAlign: "middle",
+            userSelect: "none",
+            transition: "background-color 0.3s",
+          }}
           onClick={handleDownload}
         >
           {loading ? "Preparing document..." : "Download PDF"}
