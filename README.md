@@ -1,12 +1,13 @@
 # Easy-ABC
 
-Easy-ABC is a simple web application designed to help children learn how to write. It provides an interactive interface for practicing the alphabet.
+Easy-ABC is a simple web application that i designed for my 4 year old that wants to learn how to write.
+You can enter any letters or words you want in the input field and get a downloadable PDF worksheet for your child to practice on.
 
-## Installation
 
-To run Easy-ABC locally, follow these steps:
+## Techstack
 
-1. Clone this repository to your local machine:
+The app is built with
 
-   ```bash
-   git clone https://github.com/your-username/easy-abc.git
+- nextJS 14
+- Tailwind Css
+- react-pdf
